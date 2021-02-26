@@ -1,0 +1,20 @@
+name: webhook action
+on:
+  repository_dispatch:
+    types: [major, minor, patch]
+jobs:
+  poc1:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: |
+          echo "action: ${{ github.event.action }}"
+          echo "payload: ${{ toJson(github.event.client_payload) }}"
+          NEXTVERSION=$(cat gradle.properties | awk -F'=' '{print $NF}' | awk -F. -v OFS=. '{$NF++;print}')"-SNAPSHOT"
+          echo "version="$NEXTVERSION > "gradle.properties"
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add .
+          git commit -m "bump: ${{ github.event.action }} version change to $NEXTVERSION"
+          git push
+          echo "Version changed successfully"

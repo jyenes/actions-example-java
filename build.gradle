@@ -1,0 +1,73 @@
+buildscript {
+	repositories {
+		mavenLocal()
+		mavenCentral()
+	}
+	dependencies {
+		classpath 'org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:2.7'
+	}
+}
+
+plugins {
+	id 'org.springframework.boot' version '2.4.3'
+	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+	id 'java'
+}
+
+apply plugin: 'org.sonarqube'
+apply plugin: 'maven'
+
+group = 'uk.co.santander'
+sourceCompatibility = '11'
+
+repositories {
+	mavenLocal()
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+test {
+	useJUnitPlatform()
+}
+
+def groupId = group
+def artifactId = 'ph-migration-test'
+
+uploadArchives {
+	repositories {
+		mavenLocal()
+		mavenDeployer {
+			repository(url: 'https://nexus.almuk.santanderuk.corp/repository/maven-releases/') {
+				authentication(userName: System.getenv("NEXUS_USERNAME"), password: System.getenv("NEXUS_PASSWORD"))
+			}
+			snapshotRepository(url: 'https://nexus.almuk.santanderuk.corp/repository/maven-snapshots/') {
+				authentication(userName: System.getenv("NEXUS_USERNAME"), password: System.getenv("NEXUS_PASSWORD"))
+			}
+			pom.groupId = groupId
+			pom.artifactId = artifactId
+			pom.version = version
+		}
+	}
+}
+
+sonarqube {
+	properties {
+		property "sonar.projectKey", "PaymentsHub_testing_ph-migration-test"
+		property "sonar.host.url", "https://ci-sonar.alm.santanderuk.pre.corp"
+		property "sonar.login", "dc43dc6e671c31d41f3fc0f53675498a0e42f52d"
+		property "sonar.exclusions", "**/*.sql, **/*.txt, **/*.yml, **/*Sink.java, **/*Source.java, **/*Configuration.java, **/*Exception.java, **/*Application.java, **/*Dto.java"
+		property "sonar.sources", "src/main"
+		property "sonar.tests", "src/test"
+		property "sonar.scm.provider", "git"
+		property "sonar.scm.disabled", "true"
+	}
+}
+
+
+test {
+	useJUnitPlatform()
+}

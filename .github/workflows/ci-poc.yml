@@ -1,0 +1,43 @@
+name: poc github actions
+on: 
+  workflow_dispatch:
+    inputs:
+      customVersion:
+        description: 'Custom version'     
+        required: true
+      tags:
+        description: 'Custom tags' 
+jobs:
+  poc1:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+      - run: echo "poc1-bash"
+
+  poc2:
+    needs: poc1
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+      - run: echo "poc2-bash"
+
+  create-tag:
+    needs: poc2
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v3
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            github.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: "refs/tags/${{ github.event.inputs.customVersion }}",
+              sha: context.sha
+            })
